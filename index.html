@@ -1,0 +1,298 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Used Car Price Predictor — Interactive</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg1:#6aa7ff; --bg2:#6373ff; --card:#ffffff; --accent:#00c4cc;
+    }
+    body{
+      margin:0; font-family:Inter, Arial, sans-serif; background: linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:#fff;
+    }
+    .container{max-width:1100px;margin:24px auto;padding:20px;}
+    .grid{display:grid;grid-template-columns: 1fr 420px; gap:20px;align-items:start;}
+    .card{background: rgba(255,255,255,0.08); padding:18px; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.12);}
+    h1{margin:6px 0 12px;font-size:26px;text-align:left}
+    label{display:block;font-size:14px;margin:8px 0 6px}
+    input[type=text], input[type=number], select{width:100%; padding:10px;border-radius:8px;border:none;outline:none;background:rgba(255,255,255,0.12); color:#fff}
+    .row{margin-bottom:10px}
+    .btn{background:var(--accent); color:#073036;padding:10px 16px;border:none;border-radius:10px;cursor:pointer;font-weight:600}
+    .btn:active{transform:translateY(1px)}
+    .result-box{margin-top:18px;padding:16px;border-radius:10px;background:linear-gradient(0deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)); text-align:center}
+    .price{font-size:28px;font-weight:700;margin-top:8px}
+    .small{font-size:13px;color:rgba(255,255,255,0.85)}
+    .loader{width:36px;height:36px;border-radius:50%;border:4px solid rgba(255,255,255,0.15);border-top-color:var(--accent);animation:spin 1s linear infinite;margin:0 auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* history */
+    .history {margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .history-item{background:rgba(0,0,0,0.12);padding:8px;border-radius:8px;font-size:13px}
+    /* responsive */
+    @media(max-width:980px){
+      .grid{grid-template-columns:1fr; padding-bottom:40px}
+    }
+    /* fancy animated reveal */
+    .reveal {transform:translateY(10px); opacity:0; transition: all 450ms cubic-bezier(.2,.9,.3,1);}
+    .reveal.show{transform:none; opacity:1;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h1>Used Car Price Predictor</h1>
+      <div style="text-align:right">
+        <div class="small">Interactive demo • Fill details & click predict</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- left: form -->
+      <div class="card">
+        <form id="predict-form">
+          <div class="row">
+            <label>Year of Manufacture</label>
+            <input id="yr_mfr" name="yr_mfr" type="number" min="1980" max="2025" required>
+          </div>
+
+          <div class="row">
+            <label>Kilometers Run</label>
+            <input id="kms_run" name="kms_run" type="number" min="0" required>
+          </div>
+
+          <div class="row">
+            <label>Fuel Type</label>
+            <select id="fuel_type" name="fuel_type"></select>
+          </div>
+
+          <div class="row">
+            <label>Transmission</label>
+            <select id="transmission" name="transmission"></select>
+          </div>
+
+          <div class="row">
+            <label>Total Owners</label>
+            <input id="total_owners" name="total_owners" type="number" min="0" value="1">
+          </div>
+
+          <div class="row">
+            <label>Make</label>
+            <input id="make" name="make" list="make-list" autocomplete="off">
+            <datalist id="make-list"></datalist>
+          </div>
+
+          <div class="row">
+            <label>Model</label>
+            <input id="model" name="model" list="model-list" autocomplete="off">
+            <datalist id="model-list"></datalist>
+          </div>
+
+          <div class="row">
+            <label>City</label>
+            <input id="city" name="city" list="city-list" autocomplete="off">
+            <datalist id="city-list"></datalist>
+          </div>
+
+          <div class="row">
+            <label>Body Type</label>
+            <input id="body_type" name="body_type" list="body-list" autocomplete="off">
+            <datalist id="body-list"></datalist>
+          </div>
+
+          <div class="row">
+            <label>Car Rating (1-5)</label>
+            <input id="car_rating" name="car_rating" type="number" step="0.1" min="1" max="5" value="4.0">
+          </div>
+
+          <div class="row">
+            <label>Warranty Available (1=Yes,0=No)</label>
+            <input id="warranty_avail" name="warranty_avail" type="number" min="0" max="1" value="0">
+          </div>
+
+          <div class="row">
+            <label>Original Price (optional)</label>
+            <input id="original_price" name="original_price" type="number">
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+            <button class="btn" type="submit">Predict Price</button>
+            <div id="form-msg" class="small"></div>
+          </div>
+        </form>
+
+        <div class="result-box reveal" id="result-box" style="display:block;margin-top:12px;">
+          <div id="loader" style="display:none" class="loader"></div>
+          <div id="result-content" style="display:none">
+            <div class="small">Predicted Used Car Price</div>
+            <div class="price" id="pred-price">Rs. —</div>
+            <div class="small" id="confidence-note">Model confidence: <span id="r2-val">—</span></div>
+            <div class="history" id="history"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- right: chart + tips -->
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <canvas id="priceChart" height="220"></canvas>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Tips & Auto Features</h3>
+          <ul>
+            <li>Use autosuggest for make/model to avoid typos.</li>
+            <li>Try changing year & kms to see price sensitivity.</li>
+            <li>Click multiple times — last 5 results saved locally (browser).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // global
+    let historyArr = JSON.parse(localStorage.getItem("pred_history") || "[]");
+
+    // helper: show history
+    function renderHistory(){
+      const el = document.getElementById("history");
+      el.innerHTML = "";
+      historyArr.slice(0,5).forEach(h=>{
+        const d = document.createElement("div"); d.className="history-item";
+        d.textContent = `${h.make||''} ${h.model||''} • ${h.city||''} → Rs. ${h.price}`;
+        el.appendChild(d);
+      });
+    }
+
+    // fetch options and populate selects / datalists
+    async function loadOptions(){
+      try{
+        const res = await fetch('/api/options');
+        if(!res.ok) throw new Error("No options");
+        const opts = await res.json();
+        // fuel
+        const fuel = document.getElementById("fuel_type");
+        (opts.fuel_type || ["Petrol","Diesel","CNG","Electric"]).forEach(v=>{
+          const o = document.createElement("option"); o.value=v; o.textContent=v; fuel.appendChild(o);
+        });
+        // transmission
+        const trans = document.getElementById("transmission");
+        (opts.transmission || ["Manual","Automatic"]).forEach(v=>{
+          const o = document.createElement("option"); o.value=v; o.textContent=v; trans.appendChild(o);
+        });
+        // datalists
+        function fillList(id,arr){
+          const dl = document.getElementById(id);
+          dl.innerHTML = "";
+          (arr || []).slice(0,200).forEach(v=>{
+            const opt = document.createElement("option"); opt.value = v; dl.appendChild(opt);
+          });
+        }
+        fillList("make-list", opts.make || []);
+        fillList("model-list", opts.model || []);
+        fillList("city-list", opts.city || []);
+        fillList("body-list", opts.body_type || []);
+      }catch(err){
+        console.warn("Could not load options", err);
+      }
+    }
+
+    // animated counter for price
+    function animatePrice(target){
+      const el = document.getElementById("pred-price");
+      const start = 0;
+      const duration = 700;
+      const startTime = performance.now();
+      function step(now){
+        const pct = Math.min(1, (now - startTime)/duration);
+        const val = Math.round(pct * target);
+        el.textContent = "Rs. " + val.toLocaleString();
+        if(pct < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // update chart (mock baseline vs predicted)
+    const ctx = document.getElementById("priceChart").getContext("2d");
+    const chart = new Chart(ctx, {
+      type:"bar",
+      data:{
+        labels:["Baseline Avg","Predicted"],
+        datasets:[{
+          label:"Price (Rs.)",
+          data:[300000, 0],
+          backgroundColor:["rgba(255,255,255,0.2)","rgba(0,196,204,0.8)"],
+          borderRadius:6
+        }]
+      },
+      options:{
+        plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true}}
+      }
+    });
+
+    // handle form submit
+    document.getElementById("predict-form").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      // show loader
+      document.getElementById("loader").style.display = "block";
+      document.getElementById("result-content").style.display = "none";
+      document.getElementById("form-msg").textContent = "";
+
+      // build payload
+      const payload = {};
+      ["yr_mfr","kms_run","fuel_type","transmission","total_owners","make","model","city","body_type","car_rating","warranty_avail","original_price"].forEach(k=>{
+        const v = document.getElementById(k).value;
+        if(v !== undefined) payload[k] = v;
+      });
+
+      // convert numeric fields to numbers
+      ["yr_mfr","kms_run","total_owners","car_rating","warranty_avail","original_price"].forEach(k=>{
+        if(payload[k] !== undefined && payload[k] !== "") payload[k] = Number(payload[k]);
+      });
+
+      try{
+        const resp = await fetch("/api/predict", {
+          method:"POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload)
+        });
+        const j = await resp.json();
+        if(resp.ok && j.predicted_price !== undefined){
+          // show animated price
+          document.getElementById("loader").style.display = "none";
+          document.getElementById("result-content").style.display = "block";
+          animatePrice(j.predicted_price);
+          document.getElementById("r2-val").textContent = "High"; // placeholder — you can compute CI later
+          // update chart
+          chart.data.datasets[0].data[1] = j.predicted_price;
+          chart.update();
+          // save to history
+          historyArr.unshift({make:payload.make, model:payload.model, city:payload.city, price:j.predicted_price});
+          historyArr = historyArr.slice(0,10);
+          localStorage.setItem("pred_history", JSON.stringify(historyArr));
+          renderHistory();
+          // reveal effect
+          const resBox = document.getElementById("result-box"); resBox.classList.add("show");
+        }else{
+          document.getElementById("loader").style.display = "none";
+          document.getElementById("form-msg").textContent = j.error || "Prediction error";
+        }
+      }catch(err){
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("form-msg").textContent = "Server error";
+        console.error(err);
+      }
+    });
+
+    // init
+    loadOptions();
+    renderHistory();
+
+  </script>
+</body>
+</html>
