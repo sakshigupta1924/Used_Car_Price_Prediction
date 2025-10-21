@@ -1,4 +1,6 @@
 # Used_Car_Price_Prediction
+## 🎬 Demo Video
+[Watch Dashboard Demo]: https://drive.google.com/file/d/1dkUVHTghRBJoh4_phPa6Kmc32y51lc7O/view?usp=sharing
 
 ### Author: Sakshi Gupta
 ### Date: October 2025
@@ -18,10 +20,7 @@ It includes:
 - **Source:** [Add your dataset source or link]
 - **Rows:** [Number of rows]
 - **Columns:** [Main columns like year, kms_run, fuel_type, selling_price, etc.]
-- **Target:** `selling_price`
-
----
-
+- **Target:** 'selling_price'
 ## 🧠 Project Workflow
 1. **Data Preprocessing:**  
    Cleaned data, handled missing values, created new features like `age` and `kms_per_year`.
@@ -34,5 +33,3 @@ It includes:
 5. **Dashboard:**  
    Interactive dashboard for insights and on-the-fly predictions.
 
-## 🎬 Demo Video
-[Watch Dashboard Demo]: https://drive.google.com/file/d/1dkUVHTghRBJoh4_phPa6Kmc32y51lc7O/view?usp=sharing
