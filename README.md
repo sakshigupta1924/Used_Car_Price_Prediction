@@ -34,3 +34,5 @@ It includes:
 5. **Dashboard:**  
    Interactive dashboard for insights and on-the-fly predictions.
 
+## 🎬 Demo Video
+[Watch Dashboard Demo]: https://drive.google.com/file/d/1dkUVHTghRBJoh4_phPa6Kmc32y51lc7O/view?usp=sharing
